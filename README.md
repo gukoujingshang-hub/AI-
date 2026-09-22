@@ -1,5 +1,3 @@
-[README.md](https://github.com/user-attachments/files/32522686/README.md
-
 # 日時作業（日報・月次レポート自動化ツール）
 
 日々の作業内容をカレンダーから日報として記録し、月末にはそれらを集計して月報を作成、指定した提出日にはSlackへ自動投稿するためのツールです。
