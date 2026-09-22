@@ -1,0 +1,28 @@
+name: Post Monthly Report to Slack
+
+on:
+  schedule:
+    # UTC 0:00 = 日本時間 9:00 に毎日実行し、その日が「提出日」かどうかを確認する
+    - cron: '0 0 * * *'
+  # 手動実行してテストしたいときのためのボタン
+  workflow_dispatch:
+
+jobs:
+  check-and-post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Check due day and post to Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: python scripts/post_to_slack.py
