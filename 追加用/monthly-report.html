@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>月報作成 | 日時作業</title>
+<style>
+  :root{
+    --bg: #F5F6F8;
+    --surface: #FFFFFF;
+    --line: #E3E6EB;
+    --text: #1B2130;
+    --text-muted: #8A93A3;
+    --text-faint: #C4C9D2;
+    --accent: #2F6F63;
+    --accent-soft: #E4EEEC;
+    --danger: #C1544B;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    margin-bottom: 22px;
+    cursor: pointer;
+  }
+
+  .back-link:hover { color: var(--text); }
+
+  .month-nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .nav-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 15px;
+  }
+
+  .nav-btn:hover { background: var(--accent-soft); color: var(--accent); }
+
+  .month-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    min-width: 220px;
+    text-align: center;
+  }
+
+  .saved-months {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 32px;
+  }
+
+  .month-pill {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .month-pill:hover { border-color: var(--accent); color: var(--accent); }
+
+  .month-pill.current {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px 24px 20px;
+    margin-bottom: 18px;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+
+  .section-title .muted {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .hint-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 12px 0 16px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-radius: 8px;
+  }
+
+  .auto-collect-panel {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0 0 22px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+
+  .auto-btn {
+    flex-shrink: 0;
+    border: 1px solid var(--accent);
+    background: var(--surface);
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .auto-btn:hover { background: var(--accent-soft); }
+
+  .hint-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .bullet-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bullet-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bullet-mark {
+    color: var(--text-muted);
+    font-size: 14px;
+    flex-shrink: 0;
+    width: 14px;
+    text-align: center;
+  }
+
+  .bullet-row input[type="text"] {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+  }
+
+  .bullet-row input[type="text"]:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  .bullet-row input[type="text"]::placeholder { color: var(--text-faint); }
+
+  .remove-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .remove-btn:hover { background: var(--bg); color: var(--danger); }
+
+  .add-row-btn {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px dashed var(--line);
+    background: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: inherit;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .add-row-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .save-status {
+    font-size: 12px;
+    color: var(--accent);
+    margin-right: auto;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .save-status.show { opacity: 1; }
+
+  .secondary-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .secondary-btn:hover { background: var(--bg); }
+
+  .save-btn {
+    padding: 11px 24px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .save-btn:hover { background: #275c52; }
+
+  @media (max-width: 560px) {
+    .card { padding: 18px 16px; }
+    .month-title { font-size: 19px; min-width: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <a class="back-link" href="index.html">← カレンダーに戻る</a>
+
+    <div class="month-nav-row">
+      <button class="nav-btn" onclick="changeMonth(-1)" aria-label="前の月">‹</button>
+      <div class="month-title" id="monthTitle">2026年9月の月報</div>
+      <button class="nav-btn" onclick="changeMonth(1)" aria-label="次の月">›</button>
+    </div>
+
+    <div class="saved-months" id="savedMonths"></div>
+
+    <div class="auto-collect-panel">
+      <button class="auto-btn" onclick="autoCollectAll()">日報から全項目を自動集計する</button>
+      <span class="hint-text">この月の日報の①〜④それぞれの項目を集めて、下の①〜④に反映します。反映時は日付付きで表示されますが、コピー・投稿時には日付を外し、重複した内容もまとめて表示します。</span>
+    </div>
+
+    <div class="card">
+      <p class="section-title">①今月の実績・成果 <span class="muted">（業務内容や作業、取り組んでいること）</span></p>
+      <div class="bullet-list" id="list1"></div>
+      <button class="add-row-btn" onclick="addRow('list1')">＋ 項目を追加</button>
+    </div>
+
+    <div class="card">
+      <p class="section-title">②良かった点・学び</p>
+      <div class="bullet-list" id="list2"></div>
+      <button class="add-row-btn" onclick="addRow('list2')">＋ 項目を追加</button>
+    </div>
+
+    <div class="card">
+      <p class="section-title">③課題・反省点</p>
+      <div class="bullet-list" id="list3"></div>
+      <button class="add-row-btn" onclick="addRow('list3')">＋ 項目を追加</button>
+    </div>
+
+    <div class="card">
+      <p class="section-title">④来月の目標・注力事項 <span class="muted">（学んでいこうとしていること）</span></p>
+      <div class="bullet-list" id="list4"></div>
+      <button class="add-row-btn" onclick="addRow('list4')">＋ 項目を追加</button>
+    </div>
+
+    <div class="actions">
+      <span class="save-status" id="saveStatus">保存しました</span>
+      <button class="secondary-btn" onclick="copyReport()">コピーする</button>
+      <button class="secondary-btn" onclick="syncToGithub()">GitHubに同期する</button>
+      <button class="save-btn" onclick="saveReport()">保存する</button>
+    </div>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  let monthParam = params.get('month'); // "YYYY-MM"
+  if (!monthParam || !/^\d{4}-\d{2}$/.test(monthParam)) monthParam = '2026-09';
+
+  const sectionMeta = {
+    list1: '①今月の実績・成果',
+    list2: '②良かった点・学び',
+    list3: '③課題・反省点',
+    list4: '④来月の目標・注力事項'
+  };
+
+  function monthLabel(m) {
+    const [y, mo] = m.split('-').map(Number);
+    return `${y}年${mo}月の月報`;
+  }
+
+  function renderTitle() {
+    document.getElementById('monthTitle').textContent = monthLabel(monthParam);
+  }
+
+  function changeMonth(diff) {
+    const [y, mo] = monthParam.split('-').map(Number);
+    const d = new Date(y, mo - 1 + diff, 1);
+    const newMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    window.location.href = `monthly-report.html?month=${newMonth}`;
+  }
+
+  function reportKey(m) { return `monthly-report-${m}`; }
+
+  function addRow(listId, value = '') {
+    const list = document.getElementById(listId);
+    const row = document.createElement('div');
+    row.className = 'bullet-row';
+    row.innerHTML = `
+      <span class="bullet-mark">・</span>
+      <input type="text" placeholder="内容を入力" value="${String(value).replace(/"/g, '&quot;')}">
+      <button class="remove-btn" onclick="removeRow(this)" aria-label="削除">×</button>
+    `;
+    list.appendChild(row);
+  }
+
+  function removeRow(btn) {
+    const list = btn.closest('.bullet-list');
+    if (list.children.length > 1) {
+      btn.closest('.bullet-row').remove();
+    } else {
+      btn.closest('.bullet-row').querySelector('input').value = '';
+    }
+  }
+
+  function clearList(listId) {
+    document.getElementById(listId).innerHTML = '';
+  }
+
+  function collectListValues(listId) {
+    return Array.from(document.querySelectorAll(`#${listId} input`))
+      .map(i => i.value.trim())
+      .filter(v => v.length > 0);
+  }
+
+  const FIELD_MAP = {
+    list1: 'tasks',
+    list2: 'goodPoints',
+    list3: 'issues',
+    list4: 'nextGoals'
+  };
+
+  function collectFromDaily(field) {
+    const collected = [];
+    for (let day = 1; day <= 31; day++) {
+      const dateStr = `${monthParam}-${String(day).padStart(2, '0')}`;
+      const [y, mo] = monthParam.split('-').map(Number);
+      const check = new Date(y, mo - 1, day);
+      if (check.getMonth() !== mo - 1) continue; // その月に存在しない日
+      const raw = localStorage.getItem(`daily-report-${dateStr}`);
+      if (!raw) continue;
+      try {
+        const data = JSON.parse(raw);
+        (data[field] || []).forEach(t => {
+          if (t && t.trim()) collected.push(`${t.trim()} (${mo}/${day})`);
+        });
+      } catch (e) {}
+    }
+    return collected;
+  }
+
+  function autoCollectAll() {
+    const listIds = Object.keys(FIELD_MAP);
+    const hasExisting = listIds.some(id => collectListValues(id).length > 0);
+    if (hasExisting) {
+      const ok = confirm('①〜④すべてを日報から集計し直します。現在入力されている内容は上書きされますがよろしいですか？');
+      if (!ok) return;
+    }
+
+    let anyCollected = false;
+    listIds.forEach(listId => {
+      const items = collectFromDaily(FIELD_MAP[listId]);
+      clearList(listId);
+      if (items.length === 0) {
+        addRow(listId);
+      } else {
+        items.forEach(item => addRow(listId, item));
+        anyCollected = true;
+      }
+    });
+
+    if (!anyCollected) {
+      alert('この月に保存されている日報が見つかりませんでした。');
+    }
+  }
+
+  function saveReport() {
+    const data = {
+      month: monthParam,
+      list1: collectListValues('list1'),
+      list2: collectListValues('list2'),
+      list3: collectListValues('list3'),
+      list4: collectListValues('list4')
+    };
+    try {
+      localStorage.setItem(reportKey(monthParam), JSON.stringify(data));
+    } catch (e) {}
+
+    const status = document.getElementById('saveStatus');
+    status.textContent = '保存しました';
+    status.classList.add('show');
+    setTimeout(() => status.classList.remove('show'), 1800);
+
+    renderSavedMonths();
+  }
+
+  // ---- GitHub連携（index.htmlの設定を共有） ----
+  const GITHUB_SETTINGS_KEY = 'github-settings'; // { owner, repo, token }
+
+  function loadGithubSettings() {
+    try {
+      return JSON.parse(localStorage.getItem(GITHUB_SETTINGS_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  async function pushJsonToGithub(path, jsonObj, commitMessage) {
+    const s = loadGithubSettings();
+    if (!s.owner || !s.repo || !s.token) {
+      throw new Error('GitHub連携が未設定です（カレンダーページ上部の「GitHub連携設定」から設定してください）');
+    }
+    const apiUrl = `https://api.github.com/repos/${s.owner}/${s.repo}/contents/${path}`;
+    const headers = {
+      Authorization: `Bearer ${s.token}`,
+      Accept: 'application/vnd.github+json'
+    };
+
+    let sha = null;
+    try {
+      const getRes = await fetch(apiUrl, { headers });
+      if (getRes.ok) {
+        const getData = await getRes.json();
+        sha = getData.sha;
+      }
+    } catch (e) {}
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(jsonObj, null, 2))));
+    const body = { message: commitMessage, content };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!putRes.ok) {
+      const err = await putRes.json().catch(() => ({}));
+      throw new Error(err.message || 'GitHubへの保存に失敗しました');
+    }
+    return putRes.json();
+  }
+
+  // 月報を、日付表記の除去・重複整理をした状態でGitHubに同期する
+  // (Slack投稿スクリプトはこのファイルをそのまま読んで投稿するため、ここで整形しておく)
+  async function syncToGithub() {
+    const status = document.getElementById('saveStatus');
+    const cleaned = {
+      month: monthParam,
+      list1: cleanForOutput(collectListValues('list1')),
+      list2: cleanForOutput(collectListValues('list2')),
+      list3: cleanForOutput(collectListValues('list3')),
+      list4: cleanForOutput(collectListValues('list4'))
+    };
+    status.textContent = 'GitHubに同期中...';
+    status.classList.add('show');
+    try {
+      await pushJsonToGithub(
+        `data/reports/${monthParam}.json`,
+        cleaned,
+        `${monthParam} の月報を更新`
+      );
+      status.textContent = 'GitHubに同期しました';
+    } catch (e) {
+      status.textContent = `同期エラー: ${e.message}`;
+    }
+    setTimeout(() => status.classList.remove('show'), 3000);
+  }
+
+  function loadReport() {
+    ['list1', 'list2', 'list3', 'list4'].forEach(id => clearList(id));
+
+    let data = null;
+    try {
+      const raw = localStorage.getItem(reportKey(monthParam));
+      if (raw) data = JSON.parse(raw);
+    } catch (e) {}
+
+    ['list1', 'list2', 'list3', 'list4'].forEach(id => {
+      const values = (data && data[id] && data[id].length > 0) ? data[id] : [''];
+      values.forEach(v => addRow(id, v));
+      if (values.length < 3) {
+        for (let i = values.length; i < 3; i++) addRow(id);
+      }
+    });
+  }
+
+  // コピー・投稿用に整形: 末尾の "(9/3)" のような日付表記を外し、
+  // 同じ内容の重複行をまとめる
+  function cleanForOutput(values) {
+    const seen = new Set();
+    const result = [];
+    values.forEach(v => {
+      const stripped = v.replace(/\s*\(\d{1,2}\/\d{1,2}\)\s*$/, '').trim();
+      if (stripped && !seen.has(stripped)) {
+        seen.add(stripped);
+        result.push(stripped);
+      }
+    });
+    return result;
+  }
+
+  function buildReportText() {
+    const parts = [];
+    parts.push('①今月の実績・成果（業務内容や作業、取り組んでいること）');
+    cleanForOutput(collectListValues('list1')).forEach(v => parts.push(`・${v}`));
+    parts.push('');
+    parts.push('②良かった点・学び');
+    cleanForOutput(collectListValues('list2')).forEach(v => parts.push(`・${v}`));
+    parts.push('');
+    parts.push('③課題・反省点');
+    cleanForOutput(collectListValues('list3')).forEach(v => parts.push(`・${v}`));
+    parts.push('');
+    parts.push('④来月の目標・注力事項（学んでいこうとしていること）');
+    cleanForOutput(collectListValues('list4')).forEach(v => parts.push(`・${v}`));
+    return parts.join('\n');
+  }
+
+  function copyReport() {
+    const text = buildReportText();
+    const status = document.getElementById('saveStatus');
+
+    const showCopied = () => {
+      status.textContent = 'コピーしました';
+      status.classList.add('show');
+      setTimeout(() => status.classList.remove('show'), 1800);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showCopied).catch(() => {
+        fallbackCopy(text, showCopied);
+      });
+    } else {
+      fallbackCopy(text, showCopied);
+    }
+  }
+
+  function fallbackCopy(text, cb) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); cb(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  function renderSavedMonths() {
+    const container = document.getElementById('savedMonths');
+    container.innerHTML = '';
+    const months = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('monthly-report-')) {
+        months.push(key.replace('monthly-report-', ''));
+      }
+    }
+    months.sort();
+    if (!months.includes(monthParam)) months.push(monthParam);
+    months.sort();
+
+    months.forEach(m => {
+      const pill = document.createElement('a');
+      pill.className = 'month-pill' + (m === monthParam ? ' current' : '');
+      pill.href = `monthly-report.html?month=${m}`;
+      const [y, mo] = m.split('-').map(Number);
+      pill.textContent = `${y}年${mo}月`;
+      container.appendChild(pill);
+    });
+  }
+
+  renderTitle();
+  loadReport();
+  renderSavedMonths();
+</script>
+</body>
+</html>

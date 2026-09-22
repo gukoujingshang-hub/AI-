@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日報作成 | 日時作業</title>
+<style>
+  :root{
+    --bg: #F5F6F8;
+    --surface: #FFFFFF;
+    --line: #E3E6EB;
+    --text: #1B2130;
+    --text-muted: #8A93A3;
+    --text-faint: #C4C9D2;
+    --accent: #2F6F63;
+    --accent-soft: #E4EEEC;
+    --danger: #C1544B;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    margin-bottom: 22px;
+    cursor: pointer;
+  }
+
+  .back-link:hover { color: var(--text); }
+
+  .date-header {
+    margin-bottom: 32px;
+  }
+
+  .date-header .weekday-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+
+  .date-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 26px 26px 22px;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 16px;
+  }
+
+  .section-title .bracket {
+    color: var(--accent);
+  }
+
+  .bullet-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bullet-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bullet-mark {
+    color: var(--text-muted);
+    font-size: 14px;
+    flex-shrink: 0;
+    width: 14px;
+    text-align: center;
+  }
+
+  .bullet-row input[type="text"] {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+  }
+
+  .bullet-row input[type="text"]:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  .bullet-row input[type="text"]::placeholder {
+    color: var(--text-faint);
+  }
+
+  .remove-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .remove-btn:hover { background: var(--bg); color: var(--danger); }
+
+  .add-row-btn {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px dashed var(--line);
+    background: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: inherit;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .add-row-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    resize: vertical;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.8;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+  }
+
+  textarea:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  textarea::placeholder {
+    color: var(--text-faint);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .save-status {
+    font-size: 12px;
+    color: var(--accent);
+    margin-right: auto;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .save-status.show { opacity: 1; }
+
+  .save-btn {
+    padding: 11px 24px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .save-btn:hover { background: #275c52; }
+
+  @media (max-width: 560px) {
+    .card { padding: 20px 18px 18px; }
+    .date-header h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <a class="back-link" onclick="history.length > 1 ? history.back() : location.href='index.html'">← カレンダーに戻る</a>
+
+    <div class="date-header">
+      <span class="weekday-tag" id="weekdayTag">火曜日</span>
+      <h1 id="dateTitle">2026年9月15日 の日報</h1>
+    </div>
+
+    <div class="card">
+      <p class="section-title"><span class="bracket">【</span>作業内容<span class="bracket">】</span></p>
+      <div class="bullet-list" id="list-tasks"></div>
+      <button class="add-row-btn" onclick="addRow('list-tasks', '今日やった作業を入力')">＋ 項目を追加</button>
+    </div>
+
+    <div class="card">
+      <p class="section-title"><span class="bracket">【</span>良かった点・学び<span class="bracket">】</span></p>
+      <div class="bullet-list" id="list-good"></div>
+      <button class="add-row-btn" onclick="addRow('list-good', '良かったことや学びを入力')">＋ 項目を追加</button>
+    </div>
+
+    <div class="card">
+      <p class="section-title"><span class="bracket">【</span>課題・反省点<span class="bracket">】</span></p>
+      <div class="bullet-list" id="list-issue"></div>
+      <button class="add-row-btn" onclick="addRow('list-issue', '課題や反省点を入力')">＋ 項目を追加</button>
+    </div>
+
+    <div class="card">
+      <p class="section-title"><span class="bracket">【</span>来月の目標・注力事項<span class="bracket">】</span></p>
+      <div class="bullet-list" id="list-goal"></div>
+      <button class="add-row-btn" onclick="addRow('list-goal', '来月に向けての目標を入力')">＋ 項目を追加</button>
+    </div>
+
+    <div class="card">
+      <p class="section-title"><span class="bracket">【</span>その他<span class="bracket">】</span></p>
+      <textarea id="thoughtsText" placeholder="今日の作業を通して感じたことや気づいたことを書いてください"></textarea>
+    </div>
+
+    <div class="actions">
+      <span class="save-status" id="saveStatus">保存しました</span>
+      <button class="save-btn" onclick="saveReport()">保存する</button>
+    </div>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const dateParam = params.get('date'); // expected format YYYY-MM-DD
+  const weekdays = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
+
+  let currentDate = dateParam ? new Date(dateParam + 'T00:00:00') : new Date();
+  if (isNaN(currentDate.getTime())) currentDate = new Date();
+
+  const y = currentDate.getFullYear();
+  const m = currentDate.getMonth() + 1;
+  const d = currentDate.getDate();
+  const w = weekdays[currentDate.getDay()];
+
+  document.getElementById('dateTitle').textContent = `${y}年${m}月${d}日 の日報`;
+  document.getElementById('weekdayTag').textContent = w;
+
+  const storageKey = `daily-report-${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+  // 各セクションのDOM上のリストIDと、保存データのフィールド名の対応
+  const sections = {
+    'list-tasks': 'tasks',
+    'list-good': 'goodPoints',
+    'list-issue': 'issues',
+    'list-goal': 'nextGoals'
+  };
+
+  function addRow(listId, placeholder, value = '') {
+    const list = document.getElementById(listId);
+    const row = document.createElement('div');
+    row.className = 'bullet-row';
+    row.innerHTML = `
+      <span class="bullet-mark">・</span>
+      <input type="text" placeholder="${placeholder}" value="${String(value).replace(/"/g,'&quot;')}">
+      <button class="remove-btn" onclick="removeRow(this)" aria-label="削除">×</button>
+    `;
+    list.appendChild(row);
+  }
+
+  function removeRow(btn) {
+    const list = btn.closest('.bullet-list');
+    if (list.children.length > 1) {
+      btn.closest('.bullet-row').remove();
+    } else {
+      btn.closest('.bullet-row').querySelector('input').value = '';
+    }
+  }
+
+  function collectListValues(listId) {
+    return Array.from(document.querySelectorAll(`#${listId} input`))
+      .map(i => i.value.trim())
+      .filter(v => v.length > 0);
+  }
+
+  function saveReport() {
+    const data = { date: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}` };
+    Object.entries(sections).forEach(([listId, field]) => {
+      data[field] = collectListValues(listId);
+    });
+    data.thoughts = document.getElementById('thoughtsText').value.trim();
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    } catch (e) {}
+
+    const status = document.getElementById('saveStatus');
+    status.classList.add('show');
+    setTimeout(() => status.classList.remove('show'), 1800);
+  }
+
+  const placeholders = {
+    'list-tasks': '今日やった作業を入力',
+    'list-good': '良かったことや学びを入力',
+    'list-issue': '課題や反省点を入力',
+    'list-goal': '来月に向けての目標を入力'
+  };
+
+  function loadReport() {
+    let data = null;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) data = JSON.parse(raw);
+    } catch (e) {}
+
+    Object.entries(sections).forEach(([listId, field]) => {
+      const list = document.getElementById(listId);
+      list.innerHTML = '';
+      const values = (data && data[field] && data[field].length > 0) ? data[field] : [''];
+      values.forEach(v => addRow(listId, placeholders[listId], v));
+    });
+
+    document.getElementById('thoughtsText').value = (data && data.thoughts) || '';
+  }
+
+  loadReport();
+</script>
+</body>
+</html>
