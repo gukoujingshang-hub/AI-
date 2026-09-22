@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日時作業</title>
+<style>
+  :root{
+    --bg: #F5F6F8;
+    --surface: #FFFFFF;
+    --line: #E3E6EB;
+    --text: #1B2130;
+    --text-muted: #8A93A3;
+    --text-faint: #C4C9D2;
+    --accent: #2F6F63;
+    --accent-soft: #E4EEEC;
+    --sunday: #C1544B;
+    --saturday: #35618C;
+    --due: #E1483F;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  h1 {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin: 0 0 6px;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+
+  .title-block h1 { margin: 0 0 6px; }
+  .title-block .subhead {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .due-date-picker {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .due-date-picker label {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .due-date-picker select {
+    padding: 8px 30px 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%238A93A3'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+
+  .due-date-picker select:focus { border-color: var(--accent); }
+
+  .github-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-bottom: 32px;
+    padding: 4px 20px;
+  }
+
+  .github-panel summary {
+    cursor: pointer;
+    padding: 14px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    list-style: none;
+  }
+
+  .github-panel summary::-webkit-details-marker { display: none; }
+
+  .github-panel summary::before {
+    content: '▸';
+    display: inline-block;
+    margin-right: 8px;
+    color: var(--text-faint);
+  }
+
+  .github-panel[open] summary::before { content: '▾'; }
+
+  .github-panel-body {
+    padding: 0 0 20px;
+  }
+
+  .github-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin: 0 0 16px;
+  }
+
+  .github-field {
+    margin-bottom: 12px;
+  }
+
+  .github-field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+
+  .github-field input {
+    width: 100%;
+    max-width: 420px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    outline: none;
+  }
+
+  .github-field input:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  .github-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .github-status {
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .calendar-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 26px 20px;
+  }
+
+  .month-title {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .month-title .year {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .nav-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 15px;
+  }
+
+  .nav-btn:hover { background: var(--bg); color: var(--text); }
+
+  .today-btn {
+    margin-left: 10px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .today-btn:hover { background: var(--bg); }
+
+  .report-btn {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .report-btn:hover { background: #275c52; }
+
+  .weekday-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .weekday-cell {
+    padding: 10px 0;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .weekday-cell.sun { color: var(--sunday); }
+  .weekday-cell.sat { color: var(--saturday); }
+
+  .date-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 108px;
+  }
+
+  .date-cell {
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 8px 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.12s ease;
+  }
+
+  .date-cell:hover {
+    background: var(--accent-soft);
+  }
+
+  .date-cell:nth-child(7n) { border-right: none; }
+
+  .date-cell .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .date-cell.outside .num { color: var(--text-faint); }
+  .date-cell.sun .num { color: var(--sunday); }
+  .date-cell.sat .num { color: var(--saturday); }
+  .date-cell.outside.sun .num,
+  .date-cell.outside.sat .num { color: var(--text-faint); }
+
+  .date-cell.today .num {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .date-cell.due .num {
+    box-shadow: 0 0 0 2px var(--due);
+  }
+
+  .date-cell.due.today .num {
+    box-shadow: 0 0 0 2px var(--due), 0 0 0 4px var(--surface);
+  }
+
+  .event {
+    margin-top: 6px;
+    font-size: 11px;
+    line-height: 1.5;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .event.gray {
+    background: var(--bg);
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 640px) {
+    .date-grid { grid-auto-rows: 74px; }
+    .event { display: none; }
+    .calendar-header { padding: 18px 16px; }
+    .weekday-cell { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="page-header">
+      <div class="title-block">
+        <h1>日時作業</h1>
+        <p class="subhead">スケジュールを月表示で確認できます</p>
+      </div>
+      <div class="due-date-picker">
+        <label for="dueDaySelect">月報提出日</label>
+        <select id="dueDaySelect" onchange="updateDueDay(this.value)">
+          <option value="">選択してください</option>
+        </select>
+      </div>
+    </div>
+
+    <details class="github-panel" id="githubPanel">
+      <summary>GitHub連携設定（Slack自動投稿用）</summary>
+      <div class="github-panel-body">
+        <p class="github-hint">
+          月報データをGitHubリポジトリに同期し、GitHub Actionsが提出日にSlackへ自動投稿します。
+          トークンはこの端末のブラウザにのみ保存され、外部には送信されません（GitHubへの通信を除く）。
+        </p>
+        <div class="github-field">
+          <label for="ghOwner">GitHubユーザー名 / Organization名</label>
+          <input type="text" id="ghOwner" placeholder="例: taniguchi-name">
+        </div>
+        <div class="github-field">
+          <label for="ghRepo">リポジトリ名</label>
+          <input type="text" id="ghRepo" placeholder="例: monthly-report-agent">
+        </div>
+        <div class="github-field">
+          <label for="ghToken">Personal Access Token（Fine-grained・Contents: Read and write）</label>
+          <input type="password" id="ghToken" placeholder="ghp_ から始まるトークン">
+        </div>
+        <div class="github-actions-row">
+          <span class="github-status" id="githubStatus"></span>
+          <button class="today-btn" onclick="saveGithubSettings()">保存する</button>
+        </div>
+      </div>
+    </details>
+
+    <div class="calendar-card">
+      <div class="calendar-header">
+        <div class="month-title">
+          <span id="monthLabel">9月</span>
+          <span class="year" id="yearLabel">2026年</span>
+        </div>
+        <div class="nav-controls">
+          <button class="nav-btn" aria-label="前の月" onclick="changeMonth(-1)">‹</button>
+          <button class="nav-btn" aria-label="次の月" onclick="changeMonth(1)">›</button>
+          <button class="today-btn" onclick="goToToday()">今日</button>
+          <button class="today-btn report-btn" id="reportBtn">月報作成</button>
+        </div>
+      </div>
+
+      <div class="weekday-row">
+        <div class="weekday-cell sun">日</div>
+        <div class="weekday-cell">月</div>
+        <div class="weekday-cell">火</div>
+        <div class="weekday-cell">水</div>
+        <div class="weekday-cell">木</div>
+        <div class="weekday-cell">金</div>
+        <div class="weekday-cell sat">土</div>
+      </div>
+
+      <div class="date-grid" id="dateGrid"></div>
+    </div>
+  </div>
+
+<script>
+  function goToReport(dateStr) {
+    window.location.href = `report.html?date=${dateStr}`;
+  }
+
+  const pad2 = n => String(n).padStart(2, '0');
+
+  const realToday = new Date();
+  realToday.setHours(0, 0, 0, 0);
+
+  // 表示中の年月（1〜12月）。初期表示は9月。
+  let viewYear = 2026;
+  let viewMonth = 9;
+
+  function renderCalendar() {
+    document.getElementById('monthLabel').textContent = `${viewMonth}月`;
+    document.getElementById('yearLabel').textContent = `${viewYear}年`;
+    document.getElementById('reportBtn').onclick = () => {
+      location.href = `monthly-report.html?month=${viewYear}-${pad2(viewMonth)}`;
+    };
+
+    const grid = document.getElementById('dateGrid');
+    grid.innerHTML = '';
+
+    const firstWeekday = new Date(viewYear, viewMonth - 1, 1).getDay(); // 0=日
+    const dueDay = localStorage.getItem(DUE_DAY_KEY);
+
+    for (let i = 0; i < 42; i++) {
+      const cellDate = new Date(viewYear, viewMonth - 1, i - firstWeekday + 1);
+      const isOutside = cellDate.getMonth() !== (viewMonth - 1);
+      const weekday = cellDate.getDay();
+      const isToday = cellDate.getTime() === realToday.getTime();
+      const isDue = !isOutside && dueDay && cellDate.getDate() === Number(dueDay);
+
+      const classes = ['date-cell'];
+      if (isOutside) classes.push('outside');
+      if (weekday === 0) classes.push('sun');
+      if (weekday === 6) classes.push('sat');
+      if (isToday) classes.push('today');
+      if (isDue) classes.push('due');
+
+      const cell = document.createElement('div');
+      cell.className = classes.join(' ');
+      if (!isOutside) cell.setAttribute('data-day', cellDate.getDate());
+
+      const dateStr = `${cellDate.getFullYear()}-${pad2(cellDate.getMonth() + 1)}-${pad2(cellDate.getDate())}`;
+      cell.onclick = () => goToReport(dateStr);
+
+      const num = document.createElement('span');
+      num.className = 'num';
+      num.textContent = cellDate.getDate();
+      cell.appendChild(num);
+
+      grid.appendChild(cell);
+    }
+  }
+
+  function changeMonth(diff) {
+    viewMonth += diff;
+    if (viewMonth < 1) { viewMonth = 12; viewYear -= 1; }
+    if (viewMonth > 12) { viewMonth = 1; viewYear += 1; }
+    renderCalendar();
+  }
+
+  function goToToday() {
+    viewYear = realToday.getFullYear();
+    viewMonth = realToday.getMonth() + 1;
+    renderCalendar();
+  }
+
+  const DUE_DAY_KEY = 'monthly-report-due-day';
+
+  function populateDueDaySelect() {
+    const select = document.getElementById('dueDaySelect');
+    for (let d = 1; d <= 31; d++) {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = `${d}日`;
+      select.appendChild(opt);
+    }
+    const saved = localStorage.getItem(DUE_DAY_KEY);
+    if (saved) select.value = saved;
+  }
+
+  function updateDueDay(value) {
+    if (value) {
+      localStorage.setItem(DUE_DAY_KEY, value);
+    } else {
+      localStorage.removeItem(DUE_DAY_KEY);
+    }
+    renderCalendar();
+    syncSettingsToGithub();
+  }
+
+  // ---- GitHub連携（共通） ----
+  const GITHUB_SETTINGS_KEY = 'github-settings'; // { owner, repo, token }
+
+  function loadGithubSettings() {
+    try {
+      return JSON.parse(localStorage.getItem(GITHUB_SETTINGS_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function populateGithubFields() {
+    const s = loadGithubSettings();
+    document.getElementById('ghOwner').value = s.owner || '';
+    document.getElementById('ghRepo').value = s.repo || '';
+    document.getElementById('ghToken').value = s.token || '';
+  }
+
+  function saveGithubSettings() {
+    const settings = {
+      owner: document.getElementById('ghOwner').value.trim(),
+      repo: document.getElementById('ghRepo').value.trim(),
+      token: document.getElementById('ghToken').value.trim()
+    };
+    localStorage.setItem(GITHUB_SETTINGS_KEY, JSON.stringify(settings));
+    const status = document.getElementById('githubStatus');
+    status.textContent = '保存しました';
+    setTimeout(() => { status.textContent = ''; }, 2000);
+    syncSettingsToGithub();
+  }
+
+  // GitHub Contents API へ1ファイルをアップロード/更新する共通関数
+  async function pushJsonToGithub(path, jsonObj, commitMessage) {
+    const s = loadGithubSettings();
+    if (!s.owner || !s.repo || !s.token) {
+      throw new Error('GitHub連携が未設定です（ページ上部の「GitHub連携設定」から設定してください）');
+    }
+    const apiUrl = `https://api.github.com/repos/${s.owner}/${s.repo}/contents/${path}`;
+    const headers = {
+      Authorization: `Bearer ${s.token}`,
+      Accept: 'application/vnd.github+json'
+    };
+
+    let sha = null;
+    try {
+      const getRes = await fetch(apiUrl, { headers });
+      if (getRes.ok) {
+        const getData = await getRes.json();
+        sha = getData.sha;
+      }
+    } catch (e) {}
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(jsonObj, null, 2))));
+    const body = { message: commitMessage, content };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!putRes.ok) {
+      const err = await putRes.json().catch(() => ({}));
+      throw new Error(err.message || 'GitHubへの保存に失敗しました');
+    }
+    return putRes.json();
+  }
+
+  // 提出日の設定を data/settings.json としてGitHubに同期
+  async function syncSettingsToGithub() {
+    const s = loadGithubSettings();
+    if (!s.owner || !s.repo || !s.token) return; // 未設定なら何もしない
+    const dueDay = localStorage.getItem(DUE_DAY_KEY);
+    const status = document.getElementById('githubStatus');
+    try {
+      await pushJsonToGithub(
+        'data/settings.json',
+        { dueDay: dueDay ? Number(dueDay) : null },
+        `提出日設定を更新 (${dueDay ? dueDay + '日' : '未設定'})`
+      );
+      if (status) { status.textContent = 'GitHubに同期しました'; setTimeout(() => status.textContent = '', 2000); }
+    } catch (e) {
+      if (status) { status.textContent = `同期エラー: ${e.message}`; }
+    }
+  }
+
+  populateDueDaySelect();
+  populateGithubFields();
+  renderCalendar();
+</script>
+</body>
+</html>
