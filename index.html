@@ -375,6 +375,10 @@
           <label for="ghToken">Personal Access Token（Fine-grained・Contents: Read and write）</label>
           <input type="password" id="ghToken" placeholder="ghp_ から始まるトークン">
         </div>
+        <div class="github-field">
+          <label for="postTime">Slack投稿時刻（提出日のこの時刻に自動投稿）</label>
+          <input type="time" id="postTime" value="09:00">
+        </div>
         <div class="github-actions-row">
           <span class="github-status" id="githubStatus"></span>
           <button class="today-btn" onclick="saveGithubSettings()">保存する</button>
@@ -515,11 +519,14 @@
     }
   }
 
+  const POST_TIME_KEY = 'monthly-report-post-time';
+
   function populateGithubFields() {
     const s = loadGithubSettings();
     document.getElementById('ghOwner').value = s.owner || '';
     document.getElementById('ghRepo').value = s.repo || '';
     document.getElementById('ghToken').value = s.token || '';
+    document.getElementById('postTime').value = localStorage.getItem(POST_TIME_KEY) || '09:00';
   }
 
   function saveGithubSettings() {
@@ -529,6 +536,10 @@
       token: document.getElementById('ghToken').value.trim()
     };
     localStorage.setItem(GITHUB_SETTINGS_KEY, JSON.stringify(settings));
+
+    const postTime = document.getElementById('postTime').value || '09:00';
+    localStorage.setItem(POST_TIME_KEY, postTime);
+
     const status = document.getElementById('githubStatus');
     status.textContent = '保存しました';
     setTimeout(() => { status.textContent = ''; }, 2000);
@@ -578,12 +589,13 @@
     const s = loadGithubSettings();
     if (!s.owner || !s.repo || !s.token) return; // 未設定なら何もしない
     const dueDay = localStorage.getItem(DUE_DAY_KEY);
+    const postTime = localStorage.getItem(POST_TIME_KEY) || '09:00';
     const status = document.getElementById('githubStatus');
     try {
       await pushJsonToGithub(
         'data/settings.json',
-        { dueDay: dueDay ? Number(dueDay) : null },
-        `提出日設定を更新 (${dueDay ? dueDay + '日' : '未設定'})`
+        { dueDay: dueDay ? Number(dueDay) : null, postTime },
+        `設定を更新 (${dueDay ? dueDay + '日' : '未設定'} ${postTime})`
       );
       if (status) { status.textContent = 'GitHubに同期しました'; setTimeout(() => status.textContent = '', 2000); }
     } catch (e) {

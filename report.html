@@ -340,8 +340,71 @@
     } catch (e) {}
 
     const status = document.getElementById('saveStatus');
+    status.textContent = '保存しました';
     status.classList.add('show');
     setTimeout(() => status.classList.remove('show'), 1800);
+
+    // GitHub連携が設定されていれば、裏側で自動的にGitHubにも同期する
+    // （月報の自動集計・自動投稿はこのデータを元に行われる）
+    syncDailyToGithub(data);
+  }
+
+  // ---- GitHub連携（index.htmlの設定を共有） ----
+  const GITHUB_SETTINGS_KEY = 'github-settings'; // { owner, repo, token }
+
+  function loadGithubSettings() {
+    try {
+      return JSON.parse(localStorage.getItem(GITHUB_SETTINGS_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  async function pushJsonToGithub(path, jsonObj, commitMessage) {
+    const s = loadGithubSettings();
+    if (!s.owner || !s.repo || !s.token) return null; // 未設定なら静かに諦める（日報作成自体は妨げない）
+    const apiUrl = `https://api.github.com/repos/${s.owner}/${s.repo}/contents/${path}`;
+    const headers = {
+      Authorization: `Bearer ${s.token}`,
+      Accept: 'application/vnd.github+json'
+    };
+
+    let sha = null;
+    try {
+      const getRes = await fetch(apiUrl, { headers });
+      if (getRes.ok) {
+        const getData = await getRes.json();
+        sha = getData.sha;
+      }
+    } catch (e) {}
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(jsonObj, null, 2))));
+    const body = { message: commitMessage, content };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!putRes.ok) {
+      const err = await putRes.json().catch(() => ({}));
+      throw new Error(err.message || 'GitHubへの保存に失敗しました');
+    }
+    return putRes.json();
+  }
+
+  async function syncDailyToGithub(data) {
+    const s = loadGithubSettings();
+    if (!s.owner || !s.repo || !s.token) return; // 未設定なら何もしない
+    const status = document.getElementById('saveStatus');
+    try {
+      await pushJsonToGithub(`data/daily/${data.date}.json`, data, `${data.date} の日報を更新`);
+      status.textContent = '保存しました（GitHubにも同期済み）';
+    } catch (e) {
+      status.textContent = `保存しました（GitHub同期は失敗: ${e.message}）`;
+    }
   }
 
   const placeholders = {
