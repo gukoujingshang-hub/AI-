@@ -2,10 +2,13 @@ name: Post Monthly Report to Slack
 
 on:
   schedule:
-    # UTC 0:00 = 日本時間 9:00 に毎日実行し、その日が「提出日」かどうかを確認する
-    - cron: '0 0 * * *'
+    # 15分おきに実行し、「今日が提出日か」「設定した投稿時刻になったか」をスクリプト側で判定する
+    - cron: '*/15 * * * *'
   # 手動実行してテストしたいときのためのボタン
   workflow_dispatch:
+
+permissions:
+  contents: write  # 投稿済みマーカーファイルをリポジトリに書き戻すために必要
 
 jobs:
   check-and-post:
@@ -22,7 +25,19 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Check due day and post to Slack
+      - name: Check due day/time and post to Slack
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: python scripts/post_to_slack.py
+
+      - name: Commit posted marker (if created)
+        run: |
+          if [ -n "$(git status --porcelain data/posted 2>/dev/null)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data/posted
+            git commit -m "Mark monthly report as posted"
+            git push
+          else
+            echo "投稿マーカーの変更なし。コミットは行いません。"
+          fi
