@@ -6,6 +6,8 @@
   ],
   "goodPoints": [],
   "issues": [],
-  "nextGoals": [],
+  "nextGoals": [
+    "管理コンソールのダブルチェックをしたことで仕組みが理解できた"
+  ],
   "thoughts": ""
 }
